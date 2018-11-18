@@ -78,7 +78,7 @@ class Users extends Controller{
             
             // Register User
             if($this->userModel->register($data)){
-              flash('register_success', 'You are registered and can log in');
+              flash("loginFlash", "You have been successfully registered. Please check your email : ". $data['email'] . "  to complete the registration.");
               redirect('users/login');
             } else {
               die('Something went wrong');    
@@ -126,7 +126,7 @@ class Users extends Controller{
   
           // Validate Email
           if(empty($data['email'])){
-            $data['email_err'] = 'Pleae enter email';
+            $data['email_err'] = 'Please enter email';
           } else{
             // check if e-mail address is well-formed
             if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
@@ -138,21 +138,36 @@ class Users extends Controller{
           if(empty($data['password'])){
             $data['password_err'] = 'Please enter password';
           }
+
           // Check for user/email
           if($this->userModel->findUserByEmail($data['email'])){
-            // User found
+            
           } else {
             // User not found
             $data['email_err'] = 'No user found';
           }
+
+          // Check for  user activation
+          $stat = $this->userModel->getUserStatus($data['email']);
+
+          if($stat == userStatusRank("active")){
+            
+          } elseif ($stat == userStatusRank("inactive")){
+            flash("loginFlash", "You need to confirm your registration before you are able to login to our system. Please check your email.", "alert alert-info");
+            redirect('/users/login');
+          } elseif ($stat == userStatusRank("blocked")){
+            flash("loginFlash", "Your account is Blocked !! Please contact the admin.", "alert alert-danger");
+            redirect('/users/login');
+          } 
   
           // Make sure errors are empty
         if(empty($data['email_err']) && empty($data['password_err'])){
           // Validated
           // Check and set logged in user
           $loggedInUser = $this->userModel->login($data['email'], $data['password']);
-
+         
           if($loggedInUser){
+            echo "yahoo vava";
             // Create Session
             $this->createUserSession($loggedInUser);
           } else {
@@ -181,9 +196,10 @@ class Users extends Controller{
     }
 
     public function createUserSession($user){
-      $_SESSION['user_id'] = $user->id;
-      $_SESSION['user_email'] = $user->email;
-      $_SESSION['user_name'] = $user->name;
+
+      $_SESSION['user_id'] = $user->user_id;
+      $_SESSION['user_email'] = $user->user_email;
+      $_SESSION['user_name'] = $user->user_name;
       redirect('');
     }
 
@@ -202,4 +218,28 @@ class Users extends Controller{
         return false;
       }
     }
+
+    // Email confirmation
+    public function emailconfirmation($code){
+      // check for the empty and invalid code
+      if(empty($code) || strlen($code)<25){
+        $this->view('404');  
+      }else{
+        // Now check if the user is already activated
+        if($this->userModel->isActivated($code)){
+          flash('loginFlash', 'Your account is already activated. You can login to your account.', 'alert alert-info');
+          redirect('users/login');
+        }else{
+          if($this->userModel->emailActivation($code)){
+            flash('loginFlash', 'Your account is now successfully activated. You can login to your account.');
+            redirect('users/login'); 
+          }else{
+            // Later redirect to the contact page ...
+            flash('registerFlash', 'There is some problem with your account creation. Please contact the admin using the contact form to solve this problem', 'alert alert-error') ;
+            redirect('users/register'); 
+          }
+        }
+      }
+    }
+
   }

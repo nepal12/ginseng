@@ -8,10 +8,15 @@ define('DB_NAME', 'ginsengdbase');
 // App Root
 define('APPROOT', dirname(dirname(__FILE__)));
 // URL Root
-define('URLROOT', 'http://ginseng.local/');
+define('URLROOT', 'http://ginseng.local');
 // Site Name
 define('SITENAME', 'Ginseng');
 
+//SMTP
+//define('SMTPHOST', 'smtp.mail.yahoo.com');
+//define('SMTPPORT', '465 ');
+//define('SMTPUSER', 'dungion_ritz@yahoo.com');
+//define('SMTPPASS', 'dandare');
 //SMTP
 define('SMTPHOST', 'smtp.mailtrap.io');
 define('SMTPPORT', '2525');
